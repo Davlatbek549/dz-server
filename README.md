@@ -65,6 +65,10 @@ It listens on <http://localhost:8080>.
 | `PUT /api/v1/library/books/{bookId}` | bearer | Add the book, or refresh its stored snapshot |
 | `PATCH /api/v1/library/books/{bookId}` | bearer | Update reading progress and/or favourite |
 | `DELETE /api/v1/library/books/{bookId}` | bearer | Remove the book from the library |
+| `GET /api/v1/collections` | bearer | The caller's collections, with their books |
+| `GET /api/v1/collections/{collectionId}` | bearer | One collection |
+| `PUT /api/v1/collections/{collectionId}` | bearer | Create or replace it, membership included |
+| `DELETE /api/v1/collections/{collectionId}` | bearer | Delete it and its membership |
 | `GET /api/v1/ping` | public | Liveness smoke test — routing, security chain, JSON |
 | `GET /actuator/health` | public | Health, including database connectivity |
 | everything else | bearer | 401 until authenticated |
@@ -150,6 +154,20 @@ user's own state (favourite, progress). Two users with the same book have two in
 This mirrors the app's local `library_book` table, minus `is_downloaded` and `download_path`: those
 describe one device's filesystem and stay local.
 
+## Collections use ids the app chose
+
+`PUT /collections/{collectionId}` takes an id the client generated, rather than a `POST` that
+returns a server-assigned one. A local-first app has to be able to create a collection offline, so
+it cannot wait for a round-trip — and because local and remote ids are identical, sync never has to
+translate between them. Ids are unique per user, so two people can both own `sci-fi`.
+
+A save replaces the collection wholesale, membership included, matching the app's local `update`,
+which deletes every row and re-inserts the list it was given. Sending an empty `books` empties it.
+
+> Worth knowing: the app derives the id from the title (`"Science Fiction"` → `science-fiction`), so
+> two collections named the same collide and the second save overwrites the first. That is a client
+> concern — the server behaves correctly either way — but it is worth fixing there.
+
 ## Database schema
 
 Flyway owns the schema. Hibernate runs with `ddl-auto: validate`, so it verifies that entities
@@ -179,8 +197,9 @@ Built in milestones, each complete before the next starts:
 - **M3 — library** *(done)*: each user's books with favourite and reading progress. Absorbs the
   "reading progress" milestone, because the app models progress on the library row rather than
   separately.
-- **M4+**: collections (shelves) → notes → highlights → reviews → friends → groups →
-  notifications → search → recommendations
+- **M4 — collections** *(done)*: user shelves and their membership, under client-chosen ids
+- **M5+**: notes → highlights → reviews → friends → groups → notifications → search →
+  recommendations
 
 Known gaps to pick up later:
 
