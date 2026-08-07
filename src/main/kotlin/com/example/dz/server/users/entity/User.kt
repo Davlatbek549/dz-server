@@ -8,7 +8,6 @@ import jakarta.persistence.Id
 import jakarta.persistence.Table
 import java.time.Instant
 import java.util.UUID
-import org.hibernate.annotations.CreationTimestamp
 import org.hibernate.annotations.UpdateTimestamp
 
 @Entity
@@ -51,13 +50,17 @@ class User(
     @GeneratedValue(strategy = GenerationType.UUID)
     var id: UUID? = null
 
-    @CreationTimestamp
+    /**
+     * Set here rather than with `@CreationTimestamp`, which Hibernate only
+     * applies when the INSERT runs — too late for a response built straight
+     * after `save()`.
+     */
     @Column(name = "created_at", nullable = false, updatable = false)
-    lateinit var createdAt: Instant
+    var createdAt: Instant = Instant.now()
 
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
-    lateinit var updatedAt: Instant
+    var updatedAt: Instant = Instant.now()
 
     /** Non-null once the row has been persisted. */
     fun requireId(): UUID = checkNotNull(id) { "User has not been persisted yet" }

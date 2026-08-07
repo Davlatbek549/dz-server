@@ -59,6 +59,12 @@ It listens on <http://localhost:8080>.
 | `GET /api/v1/auth/me` | bearer | The authenticated user |
 | `GET /api/v1/users/me` | bearer | The caller's profile |
 | `PUT /api/v1/users/me` | bearer | Replace the caller's editable profile |
+| `GET /api/v1/library/books` | bearer | The caller's library, newest first |
+| `GET /api/v1/library/books/continue-reading` | bearer | Most recent part-read book, or `204` |
+| `GET /api/v1/library/books/{bookId}` | bearer | One book from the caller's library |
+| `PUT /api/v1/library/books/{bookId}` | bearer | Add the book, or refresh its stored snapshot |
+| `PATCH /api/v1/library/books/{bookId}` | bearer | Update reading progress and/or favourite |
+| `DELETE /api/v1/library/books/{bookId}` | bearer | Remove the book from the library |
 | `GET /api/v1/ping` | public | Liveness smoke test — routing, security chain, JSON |
 | `GET /actuator/health` | public | Health, including database connectivity |
 | everything else | bearer | 401 until authenticated |
@@ -131,6 +137,19 @@ The counts on the profile (`booksRead`, `friendsCount`, `collectionsCount`) repo
 They belong to the library, friends and collections modules and will be derived from those tables
 rather than stored on the user, so they cannot drift.
 
+## There is no book catalogue
+
+The server stores **each user's library**, not a catalogue of books.
+
+Book metadata comes from **Gutendex and OpenLibrary** at runtime — the app's `RemoteBookRepository`
+already fetches it, and `bookId` here is the id from that source. A catalogue table would be a
+second copy of data we do not own, and would need syncing to stay correct.
+
+So `library_books` holds a denormalised snapshot (title, author, cover, text URL) alongside the
+user's own state (favourite, progress). Two users with the same book have two independent rows.
+This mirrors the app's local `library_book` table, minus `is_downloaded` and `download_path`: those
+describe one device's filesystem and stay local.
+
 ## Database schema
 
 Flyway owns the schema. Hibernate runs with `ddl-auto: validate`, so it verifies that entities
@@ -157,8 +176,11 @@ Built in milestones, each complete before the next starts:
 - **M1 — auth** *(done)*: `User`, BCrypt, JWT access tokens, rotating refresh tokens, the four
   `/api/v1/auth/*` endpoints
 - **M2 — users** *(done)*: profile columns, `GET`/`PUT /api/v1/users/me`
-- **M3+**: books → shelves → reading progress → notes → highlights → reviews → friends →
-  groups → notifications → search → recommendations
+- **M3 — library** *(done)*: each user's books with favourite and reading progress. Absorbs the
+  "reading progress" milestone, because the app models progress on the library row rather than
+  separately.
+- **M4+**: collections (shelves) → notes → highlights → reviews → friends → groups →
+  notifications → search → recommendations
 
 Known gaps to pick up later:
 

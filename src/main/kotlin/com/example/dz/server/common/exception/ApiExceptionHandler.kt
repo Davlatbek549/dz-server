@@ -2,6 +2,7 @@ package com.example.dz.server.common.exception
 
 import com.example.dz.server.auth.exception.AuthErrorCode
 import com.example.dz.server.auth.exception.AuthException
+import com.example.dz.server.library.exception.LibraryBookNotFoundException
 import com.example.dz.server.users.exception.UserNotFoundException
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
@@ -71,6 +72,12 @@ class ApiExceptionHandler {
             .body(ApiError(code = CODE_USER_NOT_FOUND, message = "Profile not found"))
     }
 
+    @ExceptionHandler(LibraryBookNotFoundException::class)
+    fun handleLibraryBookNotFound(): ResponseEntity<ApiError> =
+        ResponseEntity
+            .status(HttpStatus.NOT_FOUND)
+            .body(ApiError(code = CODE_BOOK_NOT_FOUND, message = "Book is not in your library"))
+
     @ExceptionHandler(Exception::class)
     fun handleUnexpected(exception: Exception): ResponseEntity<ApiError> {
         // Logged in full, but never echoed back — stack traces and SQL in a
@@ -84,5 +91,6 @@ class ApiExceptionHandler {
     private companion object {
         const val CODE_VALIDATION_FAILED = "ValidationFailed"
         const val CODE_USER_NOT_FOUND = "UserNotFound"
+        const val CODE_BOOK_NOT_FOUND = "BookNotFound"
     }
 }

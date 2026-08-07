@@ -35,9 +35,9 @@ class RefreshToken(
     @GeneratedValue(strategy = GenerationType.UUID)
     var id: UUID? = null
 
-    @CreationTimestamp
+    /** See [com.example.dz.server.users.entity.User.createdAt] for why this is not `@CreationTimestamp`. */
     @Column(name = "created_at", nullable = false, updatable = false)
-    lateinit var createdAt: Instant
+    var createdAt: Instant = Instant.now()
 
     fun isUsable(now: Instant = Instant.now()): Boolean =
         revokedAt == null && expiresAt.isAfter(now)
