@@ -57,6 +57,8 @@ It listens on <http://localhost:8080>.
 | `POST /api/v1/auth/refresh` | public | Exchange a refresh token for a new session |
 | `POST /api/v1/auth/logout` | bearer | Revoke the session (all sessions if no body) |
 | `GET /api/v1/auth/me` | bearer | The authenticated user |
+| `GET /api/v1/users/me` | bearer | The caller's profile |
+| `PUT /api/v1/users/me` | bearer | Replace the caller's editable profile |
 | `GET /api/v1/ping` | public | Liveness smoke test — routing, security chain, JSON |
 | `GET /actuator/health` | public | Health, including database connectivity |
 | everything else | bearer | 401 until authenticated |
@@ -112,6 +114,23 @@ must be at least 32 bytes, and production must override the default.
 The defaults are for local development only. Production supplies real values through the
 environment; `.env` files are git-ignored.
 
+## User-scoped data
+
+Every user-scoped route is `/me`, never `/users/{id}`. The caller's identity comes from the token,
+so there is no path parameter to tamper with — a `{id}` route would need a check comparing path to
+token on every single call, and the one place it was forgotten would expose everybody's data. New
+modules should follow the same rule.
+
+`PUT /users/me` replaces the editable profile, so a field omitted from the body is cleared. Email
+and password are not part of it: changing an address needs a verification flow and changing a
+password needs the old one, so both get their own endpoints later. Unknown fields in the body are
+ignored rather than applied — there is a test asserting that `email`, `passwordHash` and `enabled`
+cannot be smuggled in this way.
+
+The counts on the profile (`booksRead`, `friendsCount`, `collectionsCount`) report `0` for now.
+They belong to the library, friends and collections modules and will be derived from those tables
+rather than stored on the user, so they cannot drift.
+
 ## Database schema
 
 Flyway owns the schema. Hibernate runs with `ddl-auto: validate`, so it verifies that entities
@@ -137,7 +156,8 @@ Built in milestones, each complete before the next starts:
 - **M0 — skeleton** *(done)*: boots, connects to Postgres, Flyway wired, health endpoints
 - **M1 — auth** *(done)*: `User`, BCrypt, JWT access tokens, rotating refresh tokens, the four
   `/api/v1/auth/*` endpoints
-- **M2+**: users → books → shelves → reading progress → notes → highlights → reviews → friends →
+- **M2 — users** *(done)*: profile columns, `GET`/`PUT /api/v1/users/me`
+- **M3+**: books → shelves → reading progress → notes → highlights → reviews → friends →
   groups → notifications → search → recommendations
 
 Known gaps to pick up later:

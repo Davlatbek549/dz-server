@@ -27,6 +27,19 @@ class User(
     @Column(name = "avatar_url")
     var avatarUrl: String? = null,
 
+    @Column
+    var bio: String? = null,
+
+    @Column(name = "phone_number")
+    var phoneNumber: String? = null,
+
+    @Column
+    var language: String? = null,
+
+    /** Daily reading goal in minutes, shown on the profile screen. */
+    @Column(name = "current_goal_minutes")
+    var currentGoalMinutes: Int? = null,
+
     @Column(name = "email_verified", nullable = false)
     var emailVerified: Boolean = false,
 
