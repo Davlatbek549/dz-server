@@ -14,6 +14,26 @@ accounts and user data, with no third-party backend-as-a-service in between.
 > Jackson 3 under the `tools.jackson` group. Dependency snippets from Boot 3 tutorials will not
 > resolve as written.
 
+## Project structure
+
+Package by feature, then by layer. Each feature module owns its whole vertical slice:
+
+```text
+com.example.dz.server
+├── auth/          controller · service · repository · dto · mapper · entity · exception
+├── users/         same layers
+├── books/         (M2+) …
+└── common/        cross-cutting config and error handling
+```
+
+Two rules keep it predictable:
+
+- **The layer folders are the default**, even when one holds a single file. Uniformity across a
+  dozen modules is worth more than saving a directory level in the small ones.
+- **A named sub-package is allowed when files form a unit the layers don't describe.** `auth/jwt`
+  is the current example: a filter, a `@Configuration` and a `@ConfigurationProperties` class have
+  no home among the layers, and only make sense together.
+
 ## Running locally
 
 Start Postgres:

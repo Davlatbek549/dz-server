@@ -1,4 +1,4 @@
-package com.example.dz.server.auth
+package com.example.dz.server.auth.exception
 
 import org.springframework.http.HttpStatus
 

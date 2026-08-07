@@ -1,6 +1,6 @@
-package com.example.dz.server.auth
+package com.example.dz.server.auth.entity
 
-import com.example.dz.server.users.User
+import com.example.dz.server.users.entity.User
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.FetchType

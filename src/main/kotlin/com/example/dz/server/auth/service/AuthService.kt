@@ -1,13 +1,15 @@
-package com.example.dz.server.auth
+package com.example.dz.server.auth.service
 
 import com.example.dz.server.auth.dto.AuthResponse
 import com.example.dz.server.auth.dto.LoginRequest
 import com.example.dz.server.auth.dto.RefreshRequest
 import com.example.dz.server.auth.dto.SignUpRequest
 import com.example.dz.server.auth.dto.UserResponse
+import com.example.dz.server.auth.exception.AuthException
 import com.example.dz.server.auth.jwt.JwtService
-import com.example.dz.server.users.User
-import com.example.dz.server.users.UserRepository
+import com.example.dz.server.auth.mapper.toUserResponse
+import com.example.dz.server.users.entity.User
+import com.example.dz.server.users.repository.UserRepository
 import java.util.UUID
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
@@ -56,7 +58,7 @@ class AuthService(
             token = jwtService.issueAccessToken(user),
             refreshToken = newRefreshToken,
             expiresIn = jwtService.accessTokenTtlSeconds(),
-            user = UserResponse.of(user),
+            user = user.toUserResponse(),
         )
     }
 
@@ -71,7 +73,7 @@ class AuthService(
     @Transactional(readOnly = true)
     fun currentUser(userId: UUID): UserResponse =
         users.findById(userId)
-            .map(UserResponse::of)
+            .map { it.toUserResponse() }
             .orElseThrow { AuthException.invalidCredentials() }
 
     /** Spring Security declares `encode` as nullable; it never is for a real password. */
@@ -82,6 +84,6 @@ class AuthService(
         token = jwtService.issueAccessToken(user),
         refreshToken = refreshTokens.issue(user),
         expiresIn = jwtService.accessTokenTtlSeconds(),
-        user = UserResponse.of(user),
+        user = user.toUserResponse(),
     )
 }

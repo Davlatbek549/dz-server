@@ -1,7 +1,10 @@
-package com.example.dz.server.auth
+package com.example.dz.server.auth.service
 
+import com.example.dz.server.auth.entity.RefreshToken
+import com.example.dz.server.auth.exception.AuthException
 import com.example.dz.server.auth.jwt.JwtProperties
-import com.example.dz.server.users.User
+import com.example.dz.server.auth.repository.RefreshTokenRepository
+import com.example.dz.server.users.entity.User
 import java.security.MessageDigest
 import java.security.SecureRandom
 import java.time.Instant

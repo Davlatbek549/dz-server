@@ -1,6 +1,6 @@
 package com.example.dz.server.auth.jwt
 
-import com.example.dz.server.users.User
+import com.example.dz.server.users.entity.User
 import java.time.Instant
 import java.util.UUID
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm

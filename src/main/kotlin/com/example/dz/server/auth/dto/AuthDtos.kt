@@ -1,6 +1,5 @@
 package com.example.dz.server.auth.dto
 
-import com.example.dz.server.users.User
 import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Size
@@ -56,15 +55,6 @@ data class UserResponse(
     val name: String,
     val email: String?,
     val avatarUrl: String?,
-) {
-    companion object {
-        fun of(user: User) = UserResponse(
-            id = user.requireId().toString(),
-            name = user.name,
-            email = user.email,
-            avatarUrl = user.avatarUrl,
-        )
-    }
-}
+)
 
 const val PASSWORD_MIN_LENGTH = 8

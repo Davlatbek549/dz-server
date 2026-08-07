@@ -1,4 +1,4 @@
-package com.example.dz.server.auth
+package com.example.dz.server.auth.controller
 
 import com.example.dz.server.auth.dto.AuthResponse
 import com.example.dz.server.auth.dto.LoginRequest
@@ -6,6 +6,7 @@ import com.example.dz.server.auth.dto.LogoutRequest
 import com.example.dz.server.auth.dto.RefreshRequest
 import com.example.dz.server.auth.dto.SignUpRequest
 import com.example.dz.server.auth.dto.UserResponse
+import com.example.dz.server.auth.service.AuthService
 import jakarta.validation.Valid
 import java.util.UUID
 import org.springframework.http.HttpStatus

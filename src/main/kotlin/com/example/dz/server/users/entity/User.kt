@@ -1,4 +1,4 @@
-package com.example.dz.server.users
+package com.example.dz.server.users.entity
 
 import jakarta.persistence.Column
 import jakarta.persistence.Entity

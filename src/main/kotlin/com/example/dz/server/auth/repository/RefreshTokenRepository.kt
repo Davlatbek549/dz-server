@@ -1,5 +1,6 @@
-package com.example.dz.server.auth
+package com.example.dz.server.auth.repository
 
+import com.example.dz.server.auth.entity.RefreshToken
 import java.time.Instant
 import java.util.Optional
 import java.util.UUID

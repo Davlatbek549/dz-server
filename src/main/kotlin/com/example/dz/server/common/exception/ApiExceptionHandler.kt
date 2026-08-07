@@ -1,7 +1,7 @@
-package com.example.dz.server.common.web
+package com.example.dz.server.common.exception
 
-import com.example.dz.server.auth.AuthErrorCode
-import com.example.dz.server.auth.AuthException
+import com.example.dz.server.auth.exception.AuthErrorCode
+import com.example.dz.server.auth.exception.AuthException
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
