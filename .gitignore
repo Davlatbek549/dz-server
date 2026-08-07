@@ -43,3 +43,7 @@ out/
 .env
 .env.*
 !.env.example
+
+### Local tooling ###
+# Claude Code MCP config: points at a machine-specific IntelliJ port
+.mcp.json

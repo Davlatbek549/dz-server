@@ -20,6 +20,15 @@ spring:
     enabled: true
     locations: classpath:db/migration
 
+dz:
+  jwt:
+    # Development-only fallback. Production must set DZ_JWT_SECRET: anyone with
+    # this value can mint a valid token for any account.
+    secret: ${DZ_JWT_SECRET:dev-only-secret-change-me-at-least-32-bytes-long}
+    issuer: dz-server
+    access-token-ttl: 15m
+    refresh-token-ttl: 30d
+
 server:
   port: ${DZ_SERVER_PORT:8080}
 
