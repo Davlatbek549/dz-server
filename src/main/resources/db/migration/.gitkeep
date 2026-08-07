@@ -1,0 +1,2 @@
+# Flyway migrations live here, named V<n>__<description>.sql
+# The first one (V1__create_users_table.sql) arrives with M1: auth.
