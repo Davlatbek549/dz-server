@@ -22,15 +22,18 @@ spring:
 
 dz:
   jwt:
-    # Development-only fallback. Production must set DZ_JWT_SECRET: anyone with
-    # this value can mint a valid token for any account.
+    # Development-only fallback. The prod profile below removes it, so a
+    # deployment cannot start without a real one: anyone holding this value can
+    # mint a valid token for any account.
     secret: ${DZ_JWT_SECRET:dev-only-secret-change-me-at-least-32-bytes-long}
     issuer: dz-server
     access-token-ttl: 15m
     refresh-token-ttl: 30d
 
 server:
-  port: ${DZ_SERVER_PORT:8080}
+  # Hosts assign the port and pass it in as PORT; DZ_SERVER_PORT stays as the
+  # local override.
+  port: ${PORT:${DZ_SERVER_PORT:8080}}
 
 management:
   endpoints:
@@ -44,3 +47,28 @@ management:
 logging:
   level:
     org.hibernate.SQL: debug
+
+---
+# Deployment profile. Activate with SPRING_PROFILES_ACTIVE=prod.
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+dz:
+  jwt:
+    # No fallback on purpose: startup fails loudly if the secret is missing,
+    # rather than quietly signing tokens with a value that is public in git.
+    secret: ${DZ_JWT_SECRET}
+
+management:
+  endpoint:
+    health:
+      # The detailed report names the database, disk paths and free space. That
+      # is useful locally and reconnaissance material on a public URL.
+      show-details: never
+
+logging:
+  level:
+    # Statement logging would put user data in the platform's log viewer.
+    org.hibernate.SQL: warn

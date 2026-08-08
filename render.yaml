@@ -1,0 +1,30 @@
+# Render Blueprint. Point Render at this repository and it reads this file
+# instead of needing the settings entered by hand.
+#
+# The database is deliberately not defined here: Render's free Postgres is
+# deleted after 30 days, so the database lives on Neon instead and its details
+# arrive through the environment variables below.
+services:
+  - type: web
+    name: dz-server
+    runtime: docker
+    plan: free
+    region: frankfurt
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+
+      # Generated once by Render and never shown in this file. Changing it
+      # invalidates every access token that has already been issued.
+      - key: DZ_JWT_SECRET
+        generateValue: true
+
+      # From the Neon connection details. The URL needs ?sslmode=require —
+      # Neon refuses plaintext connections.
+      - key: DZ_DB_URL
+        sync: false
+      - key: DZ_DB_USER
+        sync: false
+      - key: DZ_DB_PASSWORD
+        sync: false
