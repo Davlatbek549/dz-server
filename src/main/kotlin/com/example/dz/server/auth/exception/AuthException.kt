@@ -14,6 +14,7 @@ enum class AuthErrorCode(val status: HttpStatus) {
     WeakPassword(HttpStatus.BAD_REQUEST),
     UserDisabled(HttpStatus.FORBIDDEN),
     TooManyAttempts(HttpStatus.TOO_MANY_REQUESTS),
+    ProviderNotConfigured(HttpStatus.SERVICE_UNAVAILABLE),
     Unknown(HttpStatus.INTERNAL_SERVER_ERROR),
 }
 
@@ -34,5 +35,9 @@ class AuthException(
 
         fun userDisabled() =
             AuthException(AuthErrorCode.UserDisabled, "This account has been disabled")
+
+        /** No client id configured, so no token could ever be checked against one. */
+        fun providerNotConfigured() =
+            AuthException(AuthErrorCode.ProviderNotConfigured, "Google sign-in is not available")
     }
 }

@@ -94,16 +94,16 @@ Passwords are hashed with BCrypt and never returned by any endpoint.
 
 Paths and payloads match the app's existing `KtorAuthApi` and `AuthResponseDto`, so switching the
 app over is a change to `ApiConfig.baseUrl` and nothing else. `AuthResponse` also carries
-`refreshToken` and `expiresIn`, which the app currently ignores (`ignoreUnknownKeys = true`) and
-can start reading whenever refresh support is wired up.
+`refreshToken`, which the app stores and spends at `/auth/refresh`, and `expiresIn`, which it
+still ignores (`ignoreUnknownKeys = true`) because renewal is driven by a 401 rather than a clock.
 
 Errors come back as `{"code": "...", "message": "...", "fieldErrors": {...}}`, where `code` is one
 of `InvalidCredentials`, `EmailAlreadyInUse`, `InvalidEmail`, `WeakPassword`, `UserDisabled`,
 `TooManyAttempts`, `Unknown` — the exact names in the app's `AppError.AuthReason`.
 
-> The client's `runRemote` currently maps any 401/403 to `AppError.Unauthorized` without reading
-> the body, so these codes do not reach the UI yet. Surfacing them needs `KtorAuthApi` to parse the
-> error body and throw `AuthBackendException`, as `FirebaseAuthApi` already does.
+`KtorAuthApi` reads `code` off the error body and throws `AuthBackendException`, so the app's
+sign-in screens can tell a duplicate email from a wrong password. A code it does not recognise
+falls back to `runRemote`'s status-code mapping.
 
 ## Configuration
 

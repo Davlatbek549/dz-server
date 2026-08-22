@@ -44,7 +44,10 @@ class AuthService(
         val user = users.findByEmailIgnoringCase(request.email.trim())
             .orElseThrow { AuthException.invalidCredentials() }
 
-        if (!passwordEncoder.matches(request.password, user.passwordHash)) {
+        // A provider-only account has no hash to compare. Same error as a wrong password, so
+        // the response cannot be used to discover which accounts sign in with Google.
+        val hash = user.passwordHash ?: throw AuthException.invalidCredentials()
+        if (!passwordEncoder.matches(request.password, hash)) {
             throw AuthException.invalidCredentials()
         }
         if (!user.enabled) throw AuthException.userDisabled()

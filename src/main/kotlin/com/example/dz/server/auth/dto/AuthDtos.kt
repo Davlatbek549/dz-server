@@ -42,6 +42,12 @@ data class LogoutRequest(
     val refreshToken: String? = null,
 )
 
+/** The ID token the app received from Google, to be proven before anything is believed. */
+data class GoogleSignInRequest(
+    @field:NotBlank(message = "idToken is required")
+    val idToken: String,
+)
+
 data class AuthResponse(
     val token: String,
     val refreshToken: String,

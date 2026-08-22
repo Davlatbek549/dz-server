@@ -2,11 +2,13 @@ package com.example.dz.server.auth.controller
 
 import com.example.dz.server.auth.dto.AuthResponse
 import com.example.dz.server.auth.dto.LoginRequest
+import com.example.dz.server.auth.dto.GoogleSignInRequest
 import com.example.dz.server.auth.dto.LogoutRequest
 import com.example.dz.server.auth.dto.RefreshRequest
 import com.example.dz.server.auth.dto.SignUpRequest
 import com.example.dz.server.auth.dto.UserResponse
 import com.example.dz.server.auth.service.AuthService
+import com.example.dz.server.auth.service.OAuthService
 import jakarta.validation.Valid
 import java.util.UUID
 import org.springframework.http.HttpStatus
@@ -24,7 +26,10 @@ import org.springframework.web.bind.annotation.RestController
  */
 @RestController
 @RequestMapping("/api/v1/auth")
-class AuthController(private val authService: AuthService) {
+class AuthController(
+    private val authService: AuthService,
+    private val oAuthService: OAuthService,
+) {
 
     @PostMapping("/signup")
     @ResponseStatus(HttpStatus.CREATED)
@@ -34,6 +39,11 @@ class AuthController(private val authService: AuthService) {
     @PostMapping("/login")
     fun login(@Valid @RequestBody request: LoginRequest): AuthResponse =
         authService.login(request)
+
+    /** Trades a Google ID token for a DZ session, creating or linking the account as needed. */
+    @PostMapping("/oauth/google")
+    fun signInWithGoogle(@Valid @RequestBody request: GoogleSignInRequest): AuthResponse =
+        oAuthService.signInWithGoogle(request.idToken)
 
     @PostMapping("/refresh")
     fun refresh(@Valid @RequestBody request: RefreshRequest): AuthResponse =
