@@ -21,6 +21,13 @@ spring:
     locations: classpath:db/migration
 
 dz:
+  oauth:
+    google:
+      # The **Web** OAuth client id from the Google console, not the Android one: Android tokens
+      # carry the web client in `aud`. Not a secret — it ships inside the app — but it differs
+      # per project, so it stays in configuration.
+      client-id: ${DZ_GOOGLE_CLIENT_ID:}
+
   jwt:
     # Development-only fallback. The prod profile below removes it, so a
     # deployment cannot start without a real one: anyone holding this value can

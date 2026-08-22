@@ -17,8 +17,12 @@ class User(
     @Column(nullable = false)
     var email: String,
 
-    @Column(name = "password_hash", nullable = false)
-    var passwordHash: String,
+    /**
+     * Null for an account that only exists through a provider. Login treats that as "no password
+     * on this account", which is a refusal rather than a match.
+     */
+    @Column(name = "password_hash")
+    var passwordHash: String?,
 
     @Column(nullable = false)
     var name: String,

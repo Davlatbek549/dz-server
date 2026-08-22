@@ -20,6 +20,15 @@ services:
       - key: DZ_JWT_SECRET
         generateValue: true
 
+      # The Web OAuth client id from the Google console — not the Android one,
+      # because Android ID tokens carry the web client in `aud`.
+      #
+      # Not a secret: it ships inside every copy of the app. It sits here as a
+      # literal rather than being typed into the dashboard, so a blueprint sync
+      # cannot drop it. Google sign-in stays off wherever it is unset.
+      - key: DZ_GOOGLE_CLIENT_ID
+        value: 169301208092-ed5g27rr81ptcm2k3gfoiruhibgcl2g2.apps.googleusercontent.com
+
       # From the Neon connection details. The URL needs ?sslmode=require —
       # Neon refuses plaintext connections.
       - key: DZ_DB_URL
