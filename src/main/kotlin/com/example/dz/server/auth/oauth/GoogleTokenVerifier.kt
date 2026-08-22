@@ -50,7 +50,7 @@ class GoogleTokenVerifier(properties: GoogleOAuthProperties) {
                 DelegatingOAuth2TokenValidator(
                     JwtValidators.createDefault(),
                     issuedByGoogle(),
-                    issuedForThisApp(properties.clientId),
+                    issuedForThisApp(properties.acceptedAudiences),
                 )
             )
         }
@@ -91,9 +91,12 @@ class GoogleTokenVerifier(properties: GoogleOAuthProperties) {
     /**
      * Without this, any Google ID token from any app in the world would be accepted — they are
      * all signed by the same keys. The audience is what makes one ours.
+     *
+     * [accepted] holds one id per platform, so a token is ours if it names any of them. An empty
+     * set matches nothing, which is the correct behaviour for an unconfigured server.
      */
-    private fun issuedForThisApp(clientId: String) = OAuth2TokenValidator<Jwt> { jwt ->
-        if (clientId.isNotBlank() && jwt.audience?.contains(clientId) == true) {
+    private fun issuedForThisApp(accepted: Set<String>) = OAuth2TokenValidator<Jwt> { jwt ->
+        if (jwt.audience.orEmpty().any { it in accepted }) {
             OAuth2TokenValidatorResult.success()
         } else {
             OAuth2TokenValidatorResult.failure(

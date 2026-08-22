@@ -23,10 +23,10 @@ spring:
 dz:
   oauth:
     google:
-      # The **Web** OAuth client id from the Google console, not the Android one: Android tokens
-      # carry the web client in `aud`. Not a secret — it ships inside the app — but it differs
-      # per project, so it stays in configuration.
-      client-id: ${DZ_GOOGLE_CLIENT_ID:}
+      # Comma-separated. One id per platform: Android tokens carry the **Web** client in `aud`,
+      # iOS tokens carry the **iOS** client. Not secrets — they ship inside the apps — but they
+      # differ per project, so they stay in configuration.
+      client-ids: ${DZ_GOOGLE_CLIENT_IDS:}
 
   jwt:
     # Development-only fallback. The prod profile below removes it, so a
