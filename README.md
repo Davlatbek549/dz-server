@@ -117,12 +117,47 @@ falls back to local development defaults:
 | `DZ_DB_PASSWORD` | `dz_local_password` |
 | `DZ_SERVER_PORT` | `8080` |
 | `DZ_JWT_SECRET` | a development placeholder |
+| `DZ_RESEND_API_KEY` | empty — mail is logged, not sent |
+| `DZ_MAIL_FROM` | `dz <noreply@mail.dzreader.com>` |
 
 `DZ_JWT_SECRET` signs every access token — anyone holding it can mint a token for any account. It
 must be at least 32 bytes, and production must override the default.
 
 The defaults are for local development only. Production supplies real values through the
 environment; `.env` files are git-ignored.
+
+## Email verification
+
+Sign-up mails a six-digit code and the app opens its code screen. `POST /auth/verify` spends the
+code and marks the address verified; `POST /auth/verify/resend` sends another. Both are public,
+because they are reached while signed out — and a password reset, which reuses this machinery
+through `VerificationPurpose`, has no session at all.
+
+Six digits is only a million possibilities, so the rules around it are what make it safe:
+
+- **Hashed with BCrypt**, not the SHA-256 used for refresh tokens. Those are 32 random bytes with
+  nothing to brute-force; a fast digest of six digits is reversible from a leaked dump instantly.
+- **Fifteen minutes**, so an old message in an inbox is not a way in.
+- **Five guesses**, counted before the comparison so a wrong guess always costs one. Passing the
+  cap retires the code rather than just refusing that attempt.
+- **One use**, and issuing a new code retires the previous one, so an older mail stops working.
+
+A wrong code, an unknown address and an expired code all answer `InvalidCredentials`, and resend
+answers 204 whether or not the address is registered — otherwise either endpoint would be a way to
+discover who has an account.
+
+### Sending
+
+Mail goes through [Resend](https://resend.com) over HTTPS rather than SMTP: hosts commonly block
+outbound port 25, and a provider handles the reputation work that decides whether a code reaches
+an inbox at all. The sender must sit under the verified domain or the message fails SPF and DKIM.
+
+Without `DZ_RESEND_API_KEY` the app selects `LoggingMailer`, which writes the message to the server
+log instead of sending it — so the whole flow works locally with no account and no network, and the
+code is readable in the output.
+
+Sending is best-effort: a provider outage logs an error but does not roll back the sign-up that
+triggered it, because the code row is committed either way and the reader can tap Resend.
 
 ## User-scoped data
 

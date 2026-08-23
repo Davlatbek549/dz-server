@@ -36,6 +36,13 @@ class AuthException(
         fun userDisabled() =
             AuthException(AuthErrorCode.UserDisabled, "This account has been disabled")
 
+        /**
+         * Deliberately vague. Naming which limit was hit — guesses on a code, or how
+         * recently one was sent — would tell an attacker which lever they are pulling.
+         */
+        fun tooManyAttempts() =
+            AuthException(AuthErrorCode.TooManyAttempts, "Too many attempts, please try again later")
+
         /** No client id configured, so no token could ever be checked against one. */
         fun providerNotConfigured() =
             AuthException(AuthErrorCode.ProviderNotConfigured, "Google sign-in is not available")

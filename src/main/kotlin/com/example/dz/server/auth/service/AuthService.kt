@@ -11,7 +11,9 @@ import com.example.dz.server.auth.mapper.toUserResponse
 import com.example.dz.server.users.entity.User
 import com.example.dz.server.users.repository.UserRepository
 import java.util.UUID
+import com.example.dz.server.auth.entity.VerificationPurpose
 import org.springframework.security.crypto.password.PasswordEncoder
+import com.example.dz.server.auth.verification.VerificationService
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -20,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional
 class AuthService(
     private val users: UserRepository,
     private val passwordEncoder: PasswordEncoder,
+    private val verification: VerificationService,
     private val jwtService: JwtService,
     private val refreshTokens: RefreshTokenService,
 ) {
@@ -35,6 +38,9 @@ class AuthService(
                 name = request.name.trim(),
             )
         )
+        // A code is on its way before the response lands, so the app can open the
+        // code screen straight after sign-up.
+        verification.issueAndSend(user, VerificationPurpose.VerifyEmail)
         return issueSession(user)
     }
 
