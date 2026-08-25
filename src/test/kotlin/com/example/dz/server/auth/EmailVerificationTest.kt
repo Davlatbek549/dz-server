@@ -1,10 +1,12 @@
 package com.example.dz.server.auth
 
 import com.example.dz.server.auth.entity.VerificationPurpose
+import com.example.dz.server.auth.mail.MailDispatcher
 import com.example.dz.server.auth.mail.Mailer
 import com.example.dz.server.auth.verification.VerificationService
 import com.example.dz.server.auth.repository.VerificationCodeRepository
 import com.example.dz.server.users.repository.UserRepository
+import java.util.concurrent.Executor
 import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -18,6 +20,7 @@ import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Primary
+import org.springframework.core.task.SyncTaskExecutor
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.post
@@ -49,7 +52,10 @@ class CapturingMailer : Mailer {
  *
  * Needs the local Postgres from docker-compose, like [AuthFlowTest].
  */
-@SpringBootTest
+@SpringBootTest(
+    // So [Mail] can put a synchronous executor in place of the pooled one.
+    properties = ["spring.main.allow-bean-definition-overriding=true"],
+)
 @AutoConfigureMockMvc
 @Transactional
 class EmailVerificationTest {
@@ -59,6 +65,14 @@ class EmailVerificationTest {
         @Bean
         @Primary
         fun capturingMailer() = CapturingMailer()
+
+        /**
+         * Runs the dispatch inline. In production the send is handed to a pool so
+         * sign-up does not wait on it; here that would race every assertion below
+         * against a background thread.
+         */
+        @Bean(MailDispatcher.MAIL_EXECUTOR)
+        fun mailExecutor(): Executor = SyncTaskExecutor()
     }
 
     @Autowired private lateinit var mockMvc: MockMvc

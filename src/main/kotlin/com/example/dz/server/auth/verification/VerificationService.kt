@@ -3,14 +3,12 @@ package com.example.dz.server.auth.verification
 import com.example.dz.server.auth.entity.VerificationCode
 import com.example.dz.server.auth.entity.VerificationPurpose
 import com.example.dz.server.auth.exception.AuthException
-import com.example.dz.server.auth.mail.Mailer
+import com.example.dz.server.auth.mail.MailDispatcher
 import com.example.dz.server.auth.repository.VerificationCodeRepository
 import com.example.dz.server.users.entity.User
 import com.example.dz.server.users.repository.UserRepository
 import java.security.SecureRandom
-import org.slf4j.LoggerFactory
 import java.time.Instant
-import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -26,12 +24,11 @@ import org.springframework.transaction.annotation.Transactional
 class VerificationService(
     private val codes: VerificationCodeRepository,
     private val users: UserRepository,
-    private val encoder: PasswordEncoder,
-    private val mailer: Mailer,
+    private val hasher: VerificationCodeHasher,
+    private val mail: MailDispatcher,
     private val properties: VerificationProperties,
 ) {
     private val random = SecureRandom()
-    private val log = LoggerFactory.getLogger(VerificationService::class.java)
 
     /**
      * Mints a code, retires any earlier one, and mails it.
@@ -56,24 +53,20 @@ class VerificationService(
         codes.save(
             VerificationCode(
                 user = user,
-                codeHash = hash(code),
+                codeHash = hasher.hash(code),
                 purpose = purpose,
                 expiresAt = now.plus(properties.ttl),
             )
         )
-        // Best effort, like logout: the row is committed either way, so a provider
-        // outage costs the reader one tap on Resend rather than their new account.
-        // Letting this escape would roll back the sign-up that called it.
-        try {
-            mailer.send(
-                to = user.email,
-                subject = subjectFor(purpose),
-                html = htmlFor(purpose, user.name, code),
-                text = textFor(purpose, code),
-            )
-        } catch (error: Exception) {
-            log.error("Could not send a {} code to {}", purpose, user.email, error)
-        }
+        // Handed off rather than awaited: the row is committed either way, so
+        // sign-up has no reason to wait on someone else's API. Failures are the
+        // dispatcher's to log — see [MailDispatcher].
+        mail.dispatch(
+            to = user.email,
+            subject = subjectFor(purpose),
+            html = htmlFor(purpose, user.name, code),
+            text = textFor(purpose, code),
+        )
     }
 
     /**
@@ -111,7 +104,7 @@ class VerificationService(
             throw AuthException.tooManyAttempts()
         }
 
-        if (!encoder.matches(code, stored.codeHash)) throw AuthException.invalidCredentials()
+        if (!hasher.matches(code, stored.codeHash)) throw AuthException.invalidCredentials()
 
         stored.consumedAt = Instant.now()
         return stored
@@ -134,10 +127,6 @@ class VerificationService(
      * zeros. `nextInt(bound)` rather than a modulo of a larger draw, which
      * would make low codes fractionally likelier.
      */
-    /** Spring Security declares `encode` as nullable; it never is for a real code. */
-    private fun hash(code: String): String =
-        checkNotNull(encoder.encode(code)) { "Password encoder returned no hash" }
-
     private fun generateCode(): String {
         var bound = 1
         repeat(properties.codeLength) { bound *= 10 }
