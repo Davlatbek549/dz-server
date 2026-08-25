@@ -56,6 +56,10 @@ class SecurityConfig {
             "/api/v1/auth/login",
             "/api/v1/auth/refresh",
             "/api/v1/auth/oauth/google",
+            // Reached while signed out: during a password reset there is no session,
+            // and the app should be able to finish a stale sign-up on a new device.
+            "/api/v1/auth/verify",
+            "/api/v1/auth/verify/resend",
         )
     }
 }

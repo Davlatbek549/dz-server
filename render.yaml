@@ -29,6 +29,17 @@ services:
       - key: DZ_GOOGLE_CLIENT_ID
         value: 169301208092-ed5g27rr81ptcm2k3gfoiruhibgcl2g2.apps.googleusercontent.com
 
+      # Grants sending rights on the verified domain, so unlike the Google client
+      # ids this is a real secret and is entered in the dashboard, never here.
+      # Unset means no mail is sent and codes only appear in the logs.
+      - key: DZ_RESEND_API_KEY
+        sync: false
+
+      # Must sit under the domain verified with the provider, or the message
+      # fails SPF and DKIM and is filed as spam rather than delivered.
+      - key: DZ_MAIL_FROM
+        value: dz <noreply@mail.dzreader.com>
+
       # From the Neon connection details. The URL needs ?sslmode=require —
       # Neon refuses plaintext connections.
       - key: DZ_DB_URL

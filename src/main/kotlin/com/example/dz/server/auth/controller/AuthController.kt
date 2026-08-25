@@ -5,10 +5,14 @@ import com.example.dz.server.auth.dto.LoginRequest
 import com.example.dz.server.auth.dto.GoogleSignInRequest
 import com.example.dz.server.auth.dto.LogoutRequest
 import com.example.dz.server.auth.dto.RefreshRequest
+import com.example.dz.server.auth.dto.ResendVerificationRequest
 import com.example.dz.server.auth.dto.SignUpRequest
 import com.example.dz.server.auth.dto.UserResponse
+import com.example.dz.server.auth.dto.VerifyEmailRequest
+import com.example.dz.server.auth.entity.VerificationPurpose
 import com.example.dz.server.auth.service.AuthService
 import com.example.dz.server.auth.service.OAuthService
+import com.example.dz.server.auth.verification.VerificationService
 import jakarta.validation.Valid
 import java.util.UUID
 import org.springframework.http.HttpStatus
@@ -29,6 +33,7 @@ import org.springframework.web.bind.annotation.RestController
 class AuthController(
     private val authService: AuthService,
     private val oAuthService: OAuthService,
+    private val verificationService: VerificationService,
 ) {
 
     @PostMapping("/signup")
@@ -57,6 +62,28 @@ class AuthController(
         @RequestBody(required = false) request: LogoutRequest?,
     ) {
         authService.logout(userId, request?.refreshToken)
+    }
+
+    /**
+     * Spends a code and marks the address verified.
+     *
+     * 204 rather than a session: the caller already holds one from sign-up, and
+     * a reset is not a sign-in.
+     */
+    @PostMapping("/verify")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    fun verifyEmail(@Valid @RequestBody request: VerifyEmailRequest) {
+        verificationService.verifyEmail(request.email.trim(), request.code.trim())
+    }
+
+    /**
+     * Sends another code. Always 204, even for an address with no account:
+     * a different answer here would be a way to discover who is registered.
+     */
+    @PostMapping("/verify/resend")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    fun resendVerification(@Valid @RequestBody request: ResendVerificationRequest) {
+        verificationService.resend(request.email.trim(), VerificationPurpose.VerifyEmail)
     }
 
     @GetMapping("/me")

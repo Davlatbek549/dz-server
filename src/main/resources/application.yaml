@@ -28,6 +28,23 @@ dz:
       # per project, so it stays in configuration.
       client-id: ${DZ_GOOGLE_CLIENT_ID:}
 
+  mail:
+    # Must sit under the domain verified with the provider, or the message fails
+    # SPF and DKIM and is filed as spam rather than delivered.
+    from: ${DZ_MAIL_FROM:dz <noreply@mail.dzreader.com>}
+    # A real secret, unlike the Google client ids: it grants sending rights on
+    # the domain. Blank locally, which selects the logging stand-in so the code
+    # appears in the server output instead of an inbox.
+    api-key: ${DZ_RESEND_API_KEY:}
+
+  verification:
+    code-length: 6
+    ttl: 15m
+    # Six digits is a million possibilities, which is only out of reach while
+    # guesses are capped.
+    max-attempts: 5
+    resend-cooldown: 60s
+
   jwt:
     # Development-only fallback. The prod profile below removes it, so a
     # deployment cannot start without a real one: anyone holding this value can

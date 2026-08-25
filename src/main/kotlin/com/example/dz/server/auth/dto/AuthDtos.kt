@@ -63,4 +63,25 @@ data class UserResponse(
     val avatarUrl: String?,
 )
 
+/**
+ * Spending a code. The address travels with it because this is reached while
+ * signed out — during sign-up before the session is trusted, and during a reset
+ * where there is no session at all.
+ */
+data class VerifyEmailRequest(
+    @field:NotBlank(message = "email is required")
+    @field:Email(message = "Enter a valid email address")
+    val email: String,
+
+    @field:NotBlank(message = "code is required")
+    val code: String,
+)
+
+/** Asking for another code. Answered the same way whether or not the address exists. */
+data class ResendVerificationRequest(
+    @field:NotBlank(message = "email is required")
+    @field:Email(message = "Enter a valid email address")
+    val email: String,
+)
+
 const val PASSWORD_MIN_LENGTH = 8
