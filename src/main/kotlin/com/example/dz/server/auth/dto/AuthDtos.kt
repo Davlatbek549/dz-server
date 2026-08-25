@@ -61,6 +61,11 @@ data class UserResponse(
     val name: String,
     val email: String?,
     val avatarUrl: String?,
+    /**
+     * Whether the address has been proven. The client needs it to decide where a restored
+     * session opens: an account that never spent its code has to finish that first.
+     */
+    val emailVerified: Boolean,
 )
 
 /**

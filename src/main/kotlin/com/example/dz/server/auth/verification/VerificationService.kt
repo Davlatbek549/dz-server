@@ -119,7 +119,13 @@ class VerificationService(
     fun resend(email: String, purpose: VerificationPurpose) {
         val user = users.findByEmailIgnoringCase(email).orElse(null) ?: return
         if (purpose == VerificationPurpose.VerifyEmail && user.emailVerified) return
-        issueAndSend(user, purpose)
+
+        // The cooldown is swallowed rather than reported. Answering 429 for an address that has
+        // just been mailed and 204 for one with no account would tell them apart, which is the
+        // enumeration this endpoint exists to avoid. The reader is not left guessing either way:
+        // the screen runs its own countdown before it offers the button.
+        runCatching { issueAndSend(user, purpose) }
+            .onFailure { if (it !is AuthException) throw it }
     }
 
     /**

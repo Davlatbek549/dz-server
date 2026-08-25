@@ -146,6 +146,24 @@ A wrong code, an unknown address and an expired code all answer `InvalidCredenti
 answers 204 whether or not the address is registered — otherwise either endpoint would be a way to
 discover who has an account.
 
+### The gate
+
+Sign-up issues a session before the address is proven, so the app can hold one while the reader
+reads their mail. That session is not a way past verifying: `EmailVerifiedFilter` refuses every
+authenticated request from an unverified account with `EmailNotVerified` (403).
+
+Four paths stay open to it — `/auth/verify`, `/auth/verify/resend`, `/auth/refresh`, `/auth/logout`
+and `/auth/me` — because locking those would leave the reader stuck behind the gate with no way
+through it.
+
+The check is a lookup per gated request rather than a claim in the access token. A claim costs
+nothing per request but goes stale for the token's lifetime, so somebody who had just verified
+would keep being refused for up to fifteen minutes.
+
+`UserResponse.emailVerified` carries the state to the client, which uses it to decide where a
+restored session opens: an account that never spent its code lands back on the code screen rather
+than on Home.
+
 ### Sending
 
 Mail goes through [Resend](https://resend.com) over HTTPS rather than SMTP: hosts commonly block

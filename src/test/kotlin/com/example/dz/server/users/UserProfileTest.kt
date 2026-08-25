@@ -2,6 +2,7 @@ package com.example.dz.server.users
 
 import java.util.UUID
 import org.junit.jupiter.api.Test
+import com.example.dz.server.users.repository.UserRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
@@ -21,12 +22,18 @@ class UserProfileTest {
     @Autowired
     private lateinit var mockMvc: MockMvc
 
+    @Autowired
+    private lateinit var users: UserRepository
+
     /** Registers a user and returns their access token. */
     private fun signUpAndGetToken(email: String = "user-${UUID.randomUUID()}@example.com"): String {
         val body = mockMvc.post("/api/v1/auth/signup") {
             contentType = MediaType.APPLICATION_JSON
             content = """{"name":"Ada Lovelace","email":"$email","password":"correct-horse-battery"}"""
         }.andReturn().response.contentAsString
+        // These tests are about what sits behind the gate, not the gate itself, so the address is
+        // marked proven rather than each of them spending a code. EmailGateTest covers the gate.
+        users.findByEmailIgnoringCase(email).get().emailVerified = true
         return Regex("\"token\":\"([^\"]+)\"").find(body)!!.groupValues[1]
     }
 

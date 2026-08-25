@@ -13,4 +13,5 @@ fun User.toUserResponse() = UserResponse(
     name = name,
     email = email,
     avatarUrl = avatarUrl,
+    emailVerified = emailVerified,
 )
