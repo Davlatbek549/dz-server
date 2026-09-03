@@ -89,4 +89,34 @@ data class ResendVerificationRequest(
     val email: String,
 )
 
+/**
+ * Asking for a reset code. Answered the same way whether or not the address is
+ * registered, so this cannot be used to find out who has an account.
+ */
+data class ForgotPasswordRequest(
+    @field:NotBlank(message = "email is required")
+    @field:Email(message = "Enter a valid email address")
+    val email: String,
+)
+
+/**
+ * Spending a reset code on a new password.
+ *
+ * The code is consumed here rather than at a separate "is this code right?"
+ * step, so a reset costs exactly one of the guesses the attempt cap allows. A
+ * step that checked without spending would be a free oracle against the cap.
+ */
+data class ResetPasswordRequest(
+    @field:NotBlank(message = "email is required")
+    @field:Email(message = "Enter a valid email address")
+    val email: String,
+
+    @field:NotBlank(message = "code is required")
+    val code: String,
+
+    @field:NotBlank(message = "Password is required")
+    @field:Size(min = PASSWORD_MIN_LENGTH, message = "Password must be at least $PASSWORD_MIN_LENGTH characters")
+    val newPassword: String,
+)
+
 const val PASSWORD_MIN_LENGTH = 8

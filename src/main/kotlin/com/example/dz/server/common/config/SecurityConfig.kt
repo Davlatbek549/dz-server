@@ -64,6 +64,10 @@ class SecurityConfig {
             // and the app should be able to finish a stale sign-up on a new device.
             "/api/v1/auth/verify",
             "/api/v1/auth/verify/resend",
+            // A reset is the flow for someone who cannot sign in, so it can never
+            // require having signed in.
+            "/api/v1/auth/password/forgot",
+            "/api/v1/auth/password/reset",
         )
     }
 }

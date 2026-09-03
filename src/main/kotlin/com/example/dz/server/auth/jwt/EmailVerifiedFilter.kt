@@ -71,6 +71,10 @@ class EmailVerifiedFilter(
             "/api/v1/auth/refresh",
             "/api/v1/auth/logout",
             "/api/v1/auth/me",
+            // Anonymous already, but the app attaches whatever token it has stored, and
+            // an unverified one must not be what stops someone recovering their password.
+            "/api/v1/auth/password/forgot",
+            "/api/v1/auth/password/reset",
         )
     }
 }
