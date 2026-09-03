@@ -3,6 +3,7 @@ package com.example.dz.server.auth.service
 import com.example.dz.server.auth.dto.AuthResponse
 import com.example.dz.server.auth.dto.LoginRequest
 import com.example.dz.server.auth.dto.RefreshRequest
+import com.example.dz.server.auth.dto.ResetPasswordRequest
 import com.example.dz.server.auth.dto.SignUpRequest
 import com.example.dz.server.auth.dto.UserResponse
 import com.example.dz.server.auth.exception.AuthException
@@ -77,6 +78,38 @@ class AuthService(
         } else {
             refreshTokens.revoke(refreshToken)
         }
+    }
+
+    /**
+     * Starts a reset by mailing a code.
+     *
+     * Says nothing about whether the address is registered — [VerificationService.resend]
+     * already answers an unknown address exactly as a known one, cooldown included.
+     */
+    fun forgotPassword(email: String) {
+        verification.resend(email.trim(), VerificationPurpose.ResetPassword)
+    }
+
+    /**
+     * Spends a reset code and sets the new password.
+     *
+     * Every existing session goes with it. A reset is what someone does when they think the old
+     * password is known to somebody else, so leaving other devices signed in would defeat it.
+     *
+     * An unverified address stays unverified. Spending this code does prove the mailbox is read,
+     * but treating it as verification too would put that decision in a second place; the reader
+     * signs in afterwards and the usual gate sends them to finish.
+     */
+    fun resetPassword(request: ResetPasswordRequest) {
+        // Same refusal as a wrong code, so a reset cannot be used to learn which
+        // addresses have accounts.
+        val user = users.findByEmailIgnoringCase(request.email.trim())
+            .orElseThrow { AuthException.invalidCredentials() }
+
+        verification.consume(user, VerificationPurpose.ResetPassword, request.code.trim())
+
+        user.passwordHash = encodePassword(request.newPassword)
+        refreshTokens.revokeAllForUser(user.requireId())
     }
 
     @Transactional(readOnly = true)

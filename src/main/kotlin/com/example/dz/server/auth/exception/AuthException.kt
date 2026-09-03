@@ -14,6 +14,7 @@ enum class AuthErrorCode(val status: HttpStatus) {
     WeakPassword(HttpStatus.BAD_REQUEST),
     UserDisabled(HttpStatus.FORBIDDEN),
     TooManyAttempts(HttpStatus.TOO_MANY_REQUESTS),
+    EmailNotVerified(HttpStatus.FORBIDDEN),
     ProviderNotConfigured(HttpStatus.SERVICE_UNAVAILABLE),
     Unknown(HttpStatus.INTERNAL_SERVER_ERROR),
 }
@@ -35,6 +36,13 @@ class AuthException(
 
         fun userDisabled() =
             AuthException(AuthErrorCode.UserDisabled, "This account has been disabled")
+
+        /**
+         * The session is real, the address is not proven. Distinct from [invalidCredentials]
+         * because the client must send the reader to finish verifying rather than sign in again.
+         */
+        fun emailNotVerified() =
+            AuthException(AuthErrorCode.EmailNotVerified, "Confirm your email address to continue")
 
         /**
          * Deliberately vague. Naming which limit was hit — guesses on a code, or how

@@ -184,13 +184,21 @@ class EmailVerificationTest {
     }
 
     @Test
-    fun `sending again too soon is refused, so the endpoint cannot flood an inbox`() {
+    fun `sending again too soon mails nothing, and still says nothing`() {
         val (email, _) = newAccount()
+        val before = mailer.sent.size
 
-        val error = assertThrows<AuthException> {
-            verification.resend(email, VerificationPurpose.VerifyEmail)
+        mockMvc.post("/api/v1/auth/verify/resend") {
+            contentType = MediaType.APPLICATION_JSON
+            content = """{"email":"$email"}"""
+        }.andExpect {
+            // 204 even though the cooldown refused it: answering 429 here and 204 for an address
+            // with no account would tell the two apart, which is the enumeration this endpoint
+            // exists to avoid.
+            status { isNoContent() }
         }
-        assertEquals(AuthErrorCode.TooManyAttempts, error.code)
+
+        assertEquals(before, mailer.sent.size, "the cooldown has to actually stop the send")
     }
 
     @Test

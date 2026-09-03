@@ -1,11 +1,13 @@
 package com.example.dz.server.auth.controller
 
 import com.example.dz.server.auth.dto.AuthResponse
+import com.example.dz.server.auth.dto.ForgotPasswordRequest
 import com.example.dz.server.auth.dto.LoginRequest
 import com.example.dz.server.auth.dto.GoogleSignInRequest
 import com.example.dz.server.auth.dto.LogoutRequest
 import com.example.dz.server.auth.dto.RefreshRequest
 import com.example.dz.server.auth.dto.ResendVerificationRequest
+import com.example.dz.server.auth.dto.ResetPasswordRequest
 import com.example.dz.server.auth.dto.SignUpRequest
 import com.example.dz.server.auth.dto.UserResponse
 import com.example.dz.server.auth.dto.VerifyEmailRequest
@@ -84,6 +86,30 @@ class AuthController(
     @ResponseStatus(HttpStatus.NO_CONTENT)
     fun resendVerification(@Valid @RequestBody request: ResendVerificationRequest) {
         verificationService.resend(request.email.trim(), VerificationPurpose.VerifyEmail)
+    }
+
+    /**
+     * Starts a password reset. Always 204, even for an address with no account,
+     * for the same reason [resendVerification] is: a different answer here would
+     * be a way to discover who is registered.
+     */
+    @PostMapping("/password/forgot")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    fun forgotPassword(@Valid @RequestBody request: ForgotPasswordRequest) {
+        authService.forgotPassword(request.email)
+    }
+
+    /**
+     * Spends the reset code and sets the new password.
+     *
+     * 204 rather than a session, matching [verifyEmail]: a reset is not a sign-in.
+     * The reader signs in with the password they just chose, which also proves it
+     * is the one they meant to set.
+     */
+    @PostMapping("/password/reset")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    fun resetPassword(@Valid @RequestBody request: ResetPasswordRequest) {
+        authService.resetPassword(request)
     }
 
     @GetMapping("/me")

@@ -1,5 +1,6 @@
 package com.example.dz.server.common.config
 
+import com.example.dz.server.auth.jwt.EmailVerifiedFilter
 import com.example.dz.server.auth.jwt.JwtAuthenticationFilter
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -21,6 +22,7 @@ class SecurityConfig {
     fun securityFilterChain(
         http: HttpSecurity,
         jwtAuthenticationFilter: JwtAuthenticationFilter,
+        emailVerifiedFilter: EmailVerifiedFilter,
     ): SecurityFilterChain =
         http
             // No browser sessions or forms, so CSRF tokens have nothing to protect.
@@ -31,6 +33,8 @@ class SecurityConfig {
                     .anyRequest().authenticated()
             }
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter::class.java)
+            // After the JWT filter, so it sees the principal that one establishes.
+            .addFilterAfter(emailVerifiedFilter, JwtAuthenticationFilter::class.java)
             // Without an entry point an anonymous request is rejected with 403.
             // The app retries on 401, so unauthenticated has to say 401.
             .exceptionHandling {
@@ -60,6 +64,10 @@ class SecurityConfig {
             // and the app should be able to finish a stale sign-up on a new device.
             "/api/v1/auth/verify",
             "/api/v1/auth/verify/resend",
+            // A reset is the flow for someone who cannot sign in, so it can never
+            // require having signed in.
+            "/api/v1/auth/password/forgot",
+            "/api/v1/auth/password/reset",
         )
     }
 }

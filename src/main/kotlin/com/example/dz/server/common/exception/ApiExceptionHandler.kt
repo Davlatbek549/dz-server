@@ -49,7 +49,11 @@ class ApiExceptionHandler {
         }
         val code = when {
             fieldErrors.containsKey("email") -> AuthErrorCode.InvalidEmail.name
-            fieldErrors.containsKey("password") -> AuthErrorCode.WeakPassword.name
+            // Any password field, not just one called exactly "password", so a second
+            // one — `newPassword` on a reset — reports WeakPassword rather than
+            // falling through to the generic code the client cannot act on.
+            fieldErrors.keys.any { it.lowercase().endsWith("password") } ->
+                AuthErrorCode.WeakPassword.name
             else -> CODE_VALIDATION_FAILED
         }
         return ResponseEntity
