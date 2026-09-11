@@ -62,7 +62,8 @@ class EmailVerifiedFilter(
      * it is, and sign out. Locking these would leave the reader unable to escape the gate.
      */
     private fun HttpServletRequest.isExempt(): Boolean =
-        EXEMPT_PATHS.any { requestURI == it }
+        EXEMPT_PATHS.any { requestURI == it } ||
+            EXEMPT_REQUESTS.any { (verb, path) -> method == verb && requestURI == path }
 
     private companion object {
         val EXEMPT_PATHS = setOf(
@@ -76,5 +77,12 @@ class EmailVerifiedFilter(
             "/api/v1/auth/password/forgot",
             "/api/v1/auth/password/reset",
         )
+
+        /**
+         * Exempt for one method only. Deleting an account has to work for an unverified one too:
+         * an address mistyped at sign-up can never be verified, and its owner still has to be able
+         * to get rid of it. Reading or editing that profile stays behind the gate.
+         */
+        val EXEMPT_REQUESTS = setOf("DELETE" to "/api/v1/users/me")
     }
 }

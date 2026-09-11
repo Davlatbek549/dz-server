@@ -59,6 +59,7 @@ It listens on <http://localhost:8080>.
 | `GET /api/v1/auth/me` | bearer | The authenticated user |
 | `GET /api/v1/users/me` | bearer | The caller's profile |
 | `PUT /api/v1/users/me` | bearer | Replace the caller's editable profile |
+| `DELETE /api/v1/users/me` | bearer | Delete the account and everything it owns (allowed while unverified) |
 | `GET /api/v1/library/books` | bearer | The caller's library, newest first |
 | `GET /api/v1/library/books/continue-reading` | bearer | Most recent part-read book, or `204` |
 | `GET /api/v1/library/books/{bookId}` | bearer | One book from the caller's library |
