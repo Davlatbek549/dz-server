@@ -38,6 +38,20 @@ class UserService(private val users: UserRepository) {
         return user.toProfileResponse(ProfileCounts.NONE)
     }
 
+    /**
+     * Removes the account and, through the schema's `on delete cascade`, everything that points at
+     * it: sessions, library, collections and their books, linked Google identities, outstanding
+     * codes. There is nothing to delete by hand because every owning table already says so.
+     *
+     * Idempotent: an account that is already gone is a success. What the caller asked for — no
+     * account — already holds, and a retry after a lost response must not come back as an error.
+     * That relies on [com.example.dz.server.auth.jwt.EmailVerifiedFilter] letting this request
+     * through for an account it can no longer find.
+     */
+    fun deleteAccount(userId: UUID) {
+        users.deleteById(userId)
+    }
+
     private fun requireUser(userId: UUID): User =
         users.findById(userId).orElseThrow { UserNotFoundException(userId) }
 
