@@ -3,7 +3,11 @@ package com.example.dz.server.common.exception
 import com.example.dz.server.auth.exception.AuthErrorCode
 import com.example.dz.server.auth.exception.AuthException
 import com.example.dz.server.collections.exception.CollectionNotFoundException
+import com.example.dz.server.friends.exception.FriendException
+import com.example.dz.server.friends.exception.FriendNotFoundException
+import com.example.dz.server.friends.exception.FriendRequestNotFoundException
 import com.example.dz.server.library.exception.LibraryBookNotFoundException
+import com.example.dz.server.notifications.exception.NotificationNotFoundException
 import com.example.dz.server.users.exception.UserNotFoundException
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
@@ -89,6 +93,30 @@ class ApiExceptionHandler {
             .status(HttpStatus.NOT_FOUND)
             .body(ApiError(code = CODE_COLLECTION_NOT_FOUND, message = "Collection not found"))
 
+    @ExceptionHandler(NotificationNotFoundException::class)
+    fun handleNotificationNotFound(): ResponseEntity<ApiError> =
+        ResponseEntity
+            .status(HttpStatus.NOT_FOUND)
+            .body(ApiError(code = CODE_NOTIFICATION_NOT_FOUND, message = "Notification not found"))
+
+    @ExceptionHandler(FriendException::class)
+    fun handleFriend(exception: FriendException): ResponseEntity<ApiError> =
+        ResponseEntity
+            .status(exception.code.status)
+            .body(ApiError(code = exception.code.name, message = exception.message))
+
+    @ExceptionHandler(FriendRequestNotFoundException::class)
+    fun handleFriendRequestNotFound(): ResponseEntity<ApiError> =
+        ResponseEntity
+            .status(HttpStatus.NOT_FOUND)
+            .body(ApiError(code = CODE_FRIEND_REQUEST_NOT_FOUND, message = "Friend request not found"))
+
+    @ExceptionHandler(FriendNotFoundException::class)
+    fun handleFriendNotFound(): ResponseEntity<ApiError> =
+        ResponseEntity
+            .status(HttpStatus.NOT_FOUND)
+            .body(ApiError(code = CODE_FRIEND_NOT_FOUND, message = "Not friends with this user"))
+
     @ExceptionHandler(Exception::class)
     fun handleUnexpected(exception: Exception): ResponseEntity<ApiError> {
         // Logged in full, but never echoed back — stack traces and SQL in a
@@ -104,5 +132,8 @@ class ApiExceptionHandler {
         const val CODE_USER_NOT_FOUND = "UserNotFound"
         const val CODE_BOOK_NOT_FOUND = "BookNotFound"
         const val CODE_COLLECTION_NOT_FOUND = "CollectionNotFound"
+        const val CODE_NOTIFICATION_NOT_FOUND = "NotificationNotFound"
+        const val CODE_FRIEND_REQUEST_NOT_FOUND = "FriendRequestNotFound"
+        const val CODE_FRIEND_NOT_FOUND = "FriendNotFound"
     }
 }
