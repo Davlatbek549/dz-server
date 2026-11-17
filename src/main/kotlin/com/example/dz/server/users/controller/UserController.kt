@@ -2,6 +2,7 @@ package com.example.dz.server.users.controller
 
 import com.example.dz.server.users.dto.ProfileResponse
 import com.example.dz.server.users.dto.UpdateProfileRequest
+import com.example.dz.server.users.dto.UsernameAvailabilityResponse
 import com.example.dz.server.users.service.UserService
 import jakarta.validation.Valid
 import java.util.UUID
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 
@@ -37,6 +39,17 @@ class UserController(private val userService: UserService) {
         @AuthenticationPrincipal userId: UUID,
         @Valid @RequestBody request: UpdateProfileRequest,
     ): ProfileResponse = userService.updateProfile(userId, request)
+
+    /**
+     * Answers the Edit Profile screen's live check while someone types a username. Always 200:
+     * "taken" and "invalid" are answers, not errors. Usernames are public, so saying one exists
+     * gives nothing away that a profile would not.
+     */
+    @GetMapping("/username-availability")
+    fun usernameAvailability(
+        @AuthenticationPrincipal userId: UUID,
+        @RequestParam username: String,
+    ): UsernameAvailabilityResponse = userService.checkUsername(userId, username)
 
     /**
      * Deletes the caller's account and everything it owns, for good.

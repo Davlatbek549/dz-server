@@ -60,6 +60,11 @@ It listens on <http://localhost:8080>.
 | `GET /api/v1/users/me` | bearer | The caller's profile |
 | `PUT /api/v1/users/me` | bearer | Replace the caller's editable profile |
 | `DELETE /api/v1/users/me` | bearer | Delete the account and everything it owns (allowed while unverified) |
+| `PUT /api/v1/users/me/avatar` | bearer | Upload the profile photo (multipart part `image`, square) |
+| `DELETE /api/v1/users/me/avatar` | bearer | Remove the profile photo |
+| `PUT /api/v1/users/me/banner` | bearer | Upload the banner (multipart part `image`, 3:1) |
+| `DELETE /api/v1/users/me/banner` | bearer | Remove the banner |
+| `GET /files/**` | public | Stored photos, when storage is `local` |
 | `GET /api/v1/library/books` | bearer | The caller's library, newest first |
 | `GET /api/v1/library/books/continue-reading` | bearer | Most recent part-read book, or `204` |
 | `GET /api/v1/library/books/{bookId}` | bearer | One book from the caller's library |
@@ -120,6 +125,9 @@ falls back to local development defaults:
 | `DZ_JWT_SECRET` | a development placeholder |
 | `DZ_RESEND_API_KEY` | empty — mail is logged, not sent |
 | `DZ_MAIL_FROM` | `dz <noreply@mail.dzreader.com>` |
+| `DZ_STORAGE_TYPE` | `local` (`none` under the `prod` profile) |
+| `DZ_STORAGE_DIR` | `data/uploads` (git-ignored) |
+| `DZ_STORAGE_PUBLIC_URL` | `http://localhost:8080/files`; use `http://10.0.2.2:8080/files` for the Android emulator |
 
 `DZ_JWT_SECRET` signs every access token — anyone holding it can mint a token for any account. It
 must be at least 32 bytes, and production must override the default.
@@ -185,11 +193,38 @@ so there is no path parameter to tamper with — a `{id}` route would need a che
 token on every single call, and the one place it was forgotten would expose everybody's data. New
 modules should follow the same rule.
 
-`PUT /users/me` replaces the editable profile, so a field omitted from the body is cleared. Email
+`PUT /users/me` replaces the editable profile, so a field omitted from the body is cleared (the
+photo and banner are separate, below). Email
 and password are not part of it: changing an address needs a verification flow and changing a
 password needs the old one, so both get their own endpoints later. Unknown fields in the body are
 ignored rather than applied — there is a test asserting that `email`, `passwordHash` and `enabled`
 cannot be smuggled in this way.
+
+### Profile photo and banner
+
+The photo and banner are not part of `PUT /users/me`: their addresses are set only by the server,
+through `PUT` and `DELETE /users/me/avatar` and `/users/me/banner`. Sending `avatarUrl` or
+`bannerUrl` to `PUT /users/me` does nothing, and leaving them out never clears them.
+
+An upload is a JPEG or PNG of up to 5 MB in a multipart part called `image`. The app crops it to
+shape first; the server still checks everything and keeps its own copy:
+
+- what the file is comes from its first bytes, not its name or declared type (`ImageUnreadable`);
+- its dimensions are read from the header before decoding, and over 4000 pixels a side or 8
+  million in all is refused (`ImageTooLarge`, 413), so a small file claiming to be huge cannot
+  fill the memory;
+- a photo must be square and a banner 3:1, within 2% (`ImageWrongShape`), and at least 256 or 750
+  pixels wide (`ImageTooSmall`);
+- it is trimmed to the exact shape, resized to 512 × 512 or 1500 × 500, and written out as a new
+  JPEG. Nothing of the original survives but its pixels, including the location a phone camera
+  hides in it.
+
+Each upload is stored under a new random name, so no cache ever shows an old picture, and the file
+it replaces is deleted once the new address is saved. Deleting the account deletes both files.
+
+Storage is chosen by `DZ_STORAGE_TYPE`. `local` keeps files in a folder this server serves at
+`/files/`, which suits development. Render wipes its disk on every deploy, so `prod` defaults to
+`none`, which answers uploads with `PhotosUnavailable` (503) until real storage is configured.
 
 The counts on the profile (`booksRead`, `friendsCount`, `collectionsCount`) report `0` for now.
 They belong to the library, friends and collections modules and will be derived from those tables

@@ -8,13 +8,20 @@ import com.example.dz.server.friends.exception.FriendNotFoundException
 import com.example.dz.server.friends.exception.FriendRequestNotFoundException
 import com.example.dz.server.library.exception.LibraryBookNotFoundException
 import com.example.dz.server.notifications.exception.NotificationNotFoundException
+import com.example.dz.server.users.exception.ProfileErrorCode
+import com.example.dz.server.users.exception.ProfileException
 import com.example.dz.server.users.exception.UserNotFoundException
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.http.converter.HttpMessageNotReadableException
+import org.springframework.web.HttpMediaTypeNotSupportedException
 import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
+import org.springframework.web.multipart.MaxUploadSizeExceededException
+import org.springframework.web.multipart.MultipartException
+import org.springframework.web.multipart.support.MissingServletRequestPartException
 
 /**
  * Error body returned by every failing endpoint.
@@ -80,6 +87,52 @@ class ApiExceptionHandler {
             .status(HttpStatus.NOT_FOUND)
             .body(ApiError(code = CODE_USER_NOT_FOUND, message = "Profile not found"))
     }
+
+    /**
+     * A body that is not JSON, or holds a value its field cannot take — an enum name the server
+     * does not know, a date that is not a date. Without this the catch-all below would answer a
+     * client's mistake with a 500.
+     */
+    @ExceptionHandler(HttpMessageNotReadableException::class)
+    fun handleUnreadable(exception: HttpMessageNotReadableException): ResponseEntity<ApiError> {
+        log.debug("Unreadable request body", exception)
+        return ResponseEntity
+            .status(HttpStatus.BAD_REQUEST)
+            .body(ApiError(code = CODE_VALIDATION_FAILED, message = "Request is not valid"))
+    }
+
+    @ExceptionHandler(ProfileException::class)
+    fun handleProfile(exception: ProfileException): ResponseEntity<ApiError> =
+        ResponseEntity
+            .status(exception.code.status)
+            .body(ApiError(code = exception.code.name, message = exception.message))
+
+    /**
+     * An upload over `spring.servlet.multipart.max-file-size`, stopped before it reaches the
+     * controller. Answered with the same code as one the image check refuses, so the app has one
+     * case to handle.
+     */
+    @ExceptionHandler(MaxUploadSizeExceededException::class)
+    fun handleUploadTooLarge(): ResponseEntity<ApiError> =
+        ResponseEntity
+            .status(ProfileErrorCode.ImageTooLarge.status)
+            .body(ApiError(code = ProfileErrorCode.ImageTooLarge.name, message = "This picture is too large"))
+
+    /** A broken multipart body, or one without the part the endpoint needs. A client mistake, not a 500. */
+    @ExceptionHandler(MultipartException::class, MissingServletRequestPartException::class)
+    fun handleBadMultipart(exception: Exception): ResponseEntity<ApiError> {
+        log.debug("Unusable multipart request", exception)
+        return ResponseEntity
+            .status(HttpStatus.BAD_REQUEST)
+            .body(ApiError(code = CODE_VALIDATION_FAILED, message = "Request is not valid"))
+    }
+
+    /** A body in a format the endpoint does not take, such as JSON sent to an upload. */
+    @ExceptionHandler(HttpMediaTypeNotSupportedException::class)
+    fun handleUnsupportedMediaType(): ResponseEntity<ApiError> =
+        ResponseEntity
+            .status(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
+            .body(ApiError(code = CODE_VALIDATION_FAILED, message = "Request is not valid"))
 
     @ExceptionHandler(LibraryBookNotFoundException::class)
     fun handleLibraryBookNotFound(): ResponseEntity<ApiError> =

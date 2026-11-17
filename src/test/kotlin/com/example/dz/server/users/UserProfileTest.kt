@@ -78,7 +78,6 @@ class UserProfileTest {
             content = """
                 {
                   "name":"Ada B. Lovelace",
-                  "avatarUrl":"https://example.com/ada.png",
                   "bio":"Analytical engine enthusiast",
                   "phoneNumber":"+441234567890",
                   "language":"en-GB",
@@ -97,7 +96,6 @@ class UserProfileTest {
         }.andExpect {
             status { isOk() }
             jsonPath("$.user.name") { value("Ada B. Lovelace") }
-            jsonPath("$.user.avatarUrl") { value("https://example.com/ada.png") }
             jsonPath("$.phoneNumber") { value("+441234567890") }
             jsonPath("$.language") { value("en-GB") }
             jsonPath("$.currentGoalMinutes") { value(45) }
