@@ -68,6 +68,10 @@ class SecurityConfig {
             // require having signed in.
             "/api/v1/auth/password/forgot",
             "/api/v1/auth/password/reset",
+            // Stored profile photos and banners, when this server keeps them itself. Public like
+            // any picture on a web page: their names are random, so knowing one means having been
+            // shown it.
+            "/files/**",
         )
     }
 }

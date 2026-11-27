@@ -20,7 +20,22 @@ spring:
     enabled: true
     locations: classpath:db/migration
 
+  # Profile photo and banner uploads. Bigger files are refused before they are read in.
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 6MB
+
 dz:
+  storage:
+    # Where uploaded profile photos and banners are kept. `local` is a folder this server serves at
+    # /files; `none` refuses uploads. The prod profile below defaults to `none`.
+    type: ${DZ_STORAGE_TYPE:local}
+    local-directory: ${DZ_STORAGE_DIR:data/uploads}
+    # The address the app fetches files from. An Android emulator reaches this machine as
+    # 10.0.2.2, so set http://10.0.2.2:8080/files when testing from one.
+    public-base-url: ${DZ_STORAGE_PUBLIC_URL:http://localhost:8080/files}
+
   oauth:
     google:
       # The **Web** OAuth client id from the Google console, not the Android one: Android tokens
@@ -84,6 +99,10 @@ dz:
     # No fallback on purpose: startup fails loudly if the secret is missing,
     # rather than quietly signing tokens with a value that is public in git.
     secret: ${DZ_JWT_SECRET}
+  storage:
+    # Render wipes its disk on every deploy, so a local folder would lose every photo at the next
+    # release. Until real storage is configured, uploads are refused instead.
+    type: ${DZ_STORAGE_TYPE:none}
 
 management:
   endpoint:
