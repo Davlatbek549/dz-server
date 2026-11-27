@@ -26,8 +26,9 @@ data class ProfileUser(
 
 /**
  * Counts shown on the profile screen. They belong to the library, friends and
- * collections modules, so until those exist [NONE] is reported rather than a
- * stored number that could go stale.
+ * collections modules. The friends module now exists, but all three are kept
+ * together here, so [NONE] is still reported for every count rather than
+ * wiring up one and leaving the other two looking inconsistently stale.
  */
 data class ProfileCounts(
     val booksRead: Int,
